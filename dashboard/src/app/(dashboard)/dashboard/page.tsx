@@ -56,6 +56,13 @@ export default function DashboardPage() {
       color: "var(--warning-500)",
       bg: "rgba(245, 158, 11, 0.12)",
     },
+    {
+      label: "Avg Latency",
+      value: logStats?.average_latency_ms ? `${logStats.average_latency_ms}ms` : "—",
+      icon: "⚡",
+      color: "var(--primary-500)",
+      bg: "rgba(99, 102, 241, 0.12)",
+    },
   ];
 
   const securityStats = [
@@ -88,7 +95,7 @@ export default function DashboardPage() {
   return (
     <div>
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 mb-lg">
+      <div className="grid grid-cols-5 mb-lg">
         {stats.map((stat, i) => (
           <div
             key={stat.label}
@@ -110,7 +117,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Security & Threat Overview */}
-      <div className="grid grid-cols-2 mb-lg">
+      <div className="grid grid-cols-3 mb-lg gap-lg">
         {/* Security Posture */}
         <div className="glass-card animate-fade-in" style={{ padding: "var(--space-xl)" }}>
           <h3 className="mb-lg">🛡️ Security Posture</h3>
@@ -181,6 +188,37 @@ export default function DashboardPage() {
               <p className="text-xs text-muted mt-md">
                 Create a DNS policy to start filtering
               </p>
+            </div>
+          )}
+        </div>
+
+        {/* Top Requested Domains */}
+        <div className="glass-card animate-fade-in" style={{ padding: "var(--space-xl)", animationDelay: "250ms" }}>
+          <h3 className="mb-lg">📊 Top Requested Domains</h3>
+          {logStats?.top_requested_domains && logStats.top_requested_domains.length > 0 ? (
+            <div className="flex flex-col gap-md">
+              {logStats.top_requested_domains.slice(0, 8).map((item, i) => (
+                <div
+                  key={item.domain}
+                  className="flex justify-between items-center"
+                  style={{
+                    padding: "0.5rem 0.75rem",
+                    background: "rgba(99, 102, 241, 0.05)",
+                    borderRadius: "var(--radius-md)",
+                    borderLeft: "3px solid var(--primary-400)",
+                  }}
+                >
+                  <span className="text-sm font-mono truncate" style={{ maxWidth: "70%" }}>
+                    {item.domain}
+                  </span>
+                  <span className="badge badge-primary">{item.count}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">🌐</div>
+              <p>No domains requested yet</p>
             </div>
           )}
         </div>

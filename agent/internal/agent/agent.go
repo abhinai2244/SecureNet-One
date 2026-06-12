@@ -156,7 +156,11 @@ func (a *Agent) Connect(ctx context.Context) error {
 		}
 	}
 
-	// Step 5: Start heartbeat
+	// Step 5: Start local DNS proxy
+	a.dohClient.Enable()
+	go a.dohClient.StartLocalServer()
+
+	// Step 6: Start heartbeat
 	a.setState(StateConnected)
 	hbCtx, hbCancel := context.WithCancel(ctx)
 	a.stopHeartbeat = hbCancel
@@ -177,6 +181,8 @@ func (a *Agent) Disconnect() {
 	if err := a.tunnel.Disconnect(); err != nil {
 		log.Printf("Tunnel disconnect error: %v", err)
 	}
+
+	a.dohClient.Disable()
 
 	a.setState(StateDisconnected)
 	log.Println("Disconnected")

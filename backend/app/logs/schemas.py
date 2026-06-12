@@ -86,4 +86,6 @@ class LogStatsResponse(BaseModel):
     total_connections: int
     total_errors: int
     top_blocked_domains: list[dict[str, Any]]
+    top_requested_domains: list[dict[str, Any]]
+    average_latency_ms: int
     recent_events: list[DeviceLogResponse]

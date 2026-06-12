@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"time"
 )
@@ -84,4 +85,37 @@ func (c *DoHClient) Resolve(dnsQuery []byte) ([]byte, error) {
 func (c *DoHClient) SetEndpoint(endpoint string) {
 	c.endpoint = endpoint
 	log.Printf("DoH endpoint updated: %s", endpoint)
+}
+
+// StartLocalServer starts a local UDP DNS proxy on 127.0.0.1:53
+func (c *DoHClient) StartLocalServer() {
+	addr, err := net.ResolveUDPAddr("udp", "127.0.0.1:53")
+	if err != nil {
+		log.Printf("Failed to resolve UDP address: %v", err)
+		return
+	}
+	conn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		log.Printf("⚠️ Could not bind to UDP port 53. Try running as Administrator if you want local DNS proxy: %v", err)
+		return
+	}
+	log.Printf("✅ Local DNS Proxy running on 127.0.0.1:53")
+
+	buf := make([]byte, 2048)
+	for {
+		n, remoteAddr, err := conn.ReadFromUDP(buf)
+		if err != nil {
+			continue
+		}
+
+		query := make([]byte, n)
+		copy(query, buf[:n])
+
+		go func(q []byte, rAddr *net.UDPAddr) {
+			resp, err := c.Resolve(q)
+			if err == nil && resp != nil {
+				conn.WriteToUDP(resp, rAddr)
+			}
+		}(query, remoteAddr)
+	}
 }

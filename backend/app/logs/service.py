@@ -61,6 +61,8 @@ class LogService:
         connections = await self.repo.get_connection_count()
         errors = await self.repo.get_error_count()
         top_blocked = await self.repo.get_top_blocked_domains()
+        top_requested = await self.repo.get_top_requested_domains()
+        avg_latency = await self.repo.get_average_latency()
         recent = await self.repo.get_recent_events()
 
         return LogStatsResponse(
@@ -69,5 +71,7 @@ class LogService:
             total_connections=connections,
             total_errors=errors,
             top_blocked_domains=top_blocked,
+            top_requested_domains=top_requested,
+            average_latency_ms=avg_latency,
             recent_events=[DeviceLogResponse.model_validate(e) for e in recent],
         )

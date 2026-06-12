@@ -11,7 +11,8 @@ from uuid import UUID
 
 import dns.message
 import dns.rdatatype
-import httpx
+from curl_cffi import requests
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -179,7 +180,7 @@ class DnsService:
 
     async def _forward_to_upstream(self, dns_wire: bytes) -> bytes:
         """Forward DNS query to upstream DoH resolver."""
-        async with httpx.AsyncClient() as client:
+        async with requests.AsyncSession(impersonate="chrome") as client:
             response = await client.post(
                 settings.DOH_UPSTREAM,
                 content=dns_wire,

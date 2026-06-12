@@ -128,6 +128,8 @@ export interface LogStats {
   total_connections: number;
   total_errors: number;
   top_blocked_domains: { domain: string; count: number }[];
+  top_requested_domains: { domain: string; count: number }[];
+  average_latency_ms: number;
   recent_events: DeviceLog[];
 }
 

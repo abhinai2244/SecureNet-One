@@ -101,6 +101,22 @@ class LogRepository:
         )
         return [{"domain": row[0], "count": row[1]} for row in result.all()]
 
+    async def get_top_requested_domains(self, limit: int = 10) -> list[dict]:
+        result = await self.db.execute(
+            select(DnsLog.query_name, func.count(DnsLog.id).label("count"))
+            .group_by(DnsLog.query_name)
+            .order_by(desc("count"))
+            .limit(limit)
+        )
+        return [{"domain": row[0], "count": row[1]} for row in result.all()]
+
+    async def get_average_latency(self) -> int:
+        result = await self.db.execute(
+            select(func.avg(DnsLog.response_time_ms))
+        )
+        val = result.scalar_one_or_none()
+        return int(val) if val is not None else 0
+
     # ── Audit Logs ───────────────────────────────────────────────
     async def create_audit_log(
         self,
