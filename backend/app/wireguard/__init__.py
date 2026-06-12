@@ -1,0 +1,1 @@
+"""WireGuard configuration module."""
