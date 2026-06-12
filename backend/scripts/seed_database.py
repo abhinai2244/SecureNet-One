@@ -27,30 +27,31 @@ from app.core.security import hash_password
 
 async def seed():
     """Seed the database with demo data."""
-    print("🌱 Seeding SecureNet One database...")
+    print("Seeding SecureNet One database...")
 
-    # Create tables
+    # Drop and recreate tables for clean seed
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-    print("✅ Tables created")
+    print("Tables created (clean)")
 
     async with async_session() as session:
         # ── Users ────────────────────────────────────────────────
         users = [
             User(
-                email="admin@securenet.local",
+                email="admin@securenet.dev",
                 password_hash=hash_password("admin123456"),
                 full_name="Admin User",
                 role=UserRole.SUPER_ADMIN,
             ),
             User(
-                email="analyst@securenet.local",
+                email="analyst@securenet.dev",
                 password_hash=hash_password("analyst123456"),
                 full_name="Security Analyst",
                 role=UserRole.ANALYST,
             ),
             User(
-                email="user@securenet.local",
+                email="user@securenet.dev",
                 password_hash=hash_password("user12345678"),
                 full_name="Regular User",
                 role=UserRole.USER,
@@ -235,14 +236,14 @@ async def seed():
         await session.commit()
 
     print()
-    print("═" * 50)
-    print("🎉 Database seeded successfully!")
-    print("═" * 50)
+    print("=" * 50)
+    print("Database seeded successfully!")
+    print("=" * 50)
     print()
     print("Demo Accounts:")
-    print("  admin@securenet.local / admin123456 (Super Admin)")
-    print("  analyst@securenet.local / analyst123456 (Analyst)")
-    print("  user@securenet.local / user12345678 (User)")
+    print("  admin@securenet.dev / admin123456 (Super Admin)")
+    print("  analyst@securenet.dev / analyst123456 (Analyst)")
+    print("  user@securenet.dev / user12345678 (User)")
     print()
 
 
