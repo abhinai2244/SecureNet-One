@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Go
+agent/securenet.exe
+agent/*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Node / Next.js
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+dashboard/build/
+dashboard/.env*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -67,6 +68,7 @@ type Agent struct {
 	listenerMu     sync.Mutex
 
 	stopHeartbeat context.CancelFunc
+	sshCmd        *exec.Cmd
 }
 
 // Config holds agent configuration.
@@ -75,6 +77,7 @@ type Config struct {
 	Email       string
 	Password    string
 	AutoConnect bool
+	VPSTunnel   string
 	Version     string
 }
 
@@ -166,6 +169,20 @@ func (a *Agent) Connect(ctx context.Context) error {
 	a.stopHeartbeat = hbCancel
 	go a.heartbeatLoop(hbCtx)
 
+	// Step 7: VPS Tunnel (if configured)
+	if a.config.VPSTunnel != "" {
+		log.Printf("🚀 Establishing secure VPS Tunnel to %s...", a.config.VPSTunnel)
+		// Run ssh -D 1080 -N -q user@ip
+		a.sshCmd = exec.Command("ssh", "-D", "1080", "-N", "-q", a.config.VPSTunnel)
+		err := a.sshCmd.Start()
+		if err != nil {
+			log.Printf("❌ Failed to start VPS tunnel: %v. Make sure 'ssh' is installed and you have passwordless access.", err)
+		} else {
+			log.Printf("✅ Secure SOCKS5 Tunnel established to VPS!")
+			log.Printf("👉 Set Windows Proxy to: SOCKS5 127.0.0.1:1080")
+		}
+	}
+
 	log.Println("✅ Agent connected successfully")
 	return nil
 }
@@ -183,6 +200,11 @@ func (a *Agent) Disconnect() {
 	}
 
 	a.dohClient.Disable()
+
+	if a.sshCmd != nil && a.sshCmd.Process != nil {
+		a.sshCmd.Process.Kill()
+		log.Println("🔌 VPS Tunnel disconnected")
+	}
 
 	a.setState(StateDisconnected)
 	log.Println("Disconnected")

@@ -1,152 +1,68 @@
-# 🛡️ SecureNet One
+# SecureNet One
 
-> A production-style MVP of a **Cloudflare One / WARP-inspired Zero Trust Security Platform**, built as a final-year cybersecurity project.
+SecureNet One is a Zero Trust Desktop Agent, DNS Proxy, and Dashboard built for secure browsing, telemetry, and bypassing ISP Deep Packet Inspection.
 
----
+## 🚀 Features
+- **Local DNS Proxy**: Encrypts and forwards local DNS queries using Post-Quantum Cryptography to Cloudflare.
+- **Deep Packet Inspection Bypass**: Fragments TLS ClientHello packets to evade SNI-based filtering.
+- **VPS Tunneling**: Built-in support to create a secure SSH SOCKS5 tunnel to any remote VPS.
+- **Analytics Dashboard**: Tracks total DNS usage, average latency, and most requested domains.
 
-## 🏗️ Architecture
+## 🖥️ Deploying on a VPS
 
-```
-┌─────────────────────┐
-│   Desktop Agent     │  Go (Windows)
-│   (System Tray)     │  WireGuard + DoH
-└─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐
-│   WireGuard Tunnel  │  Encrypted UDP
-│   + DoH DNS         │  HTTPS DNS
-└─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐
-│   Gateway Server    │
-│   ┌───────┬───────┐ │
-│   │FastAPI│ DoH   │ │
-│   │Backend│Server │ │
-│   └───┬───┴───┬───┘ │
-│       │       │     │
-│   ┌───┴───┬───┴───┐ │
-│   │Postgre│ Redis │ │
-│   │  SQL  │       │ │
-│   └───────┴───────┘ │
-└─────────────────────┘
-          │
-          ▼
-┌─────────────────────┐
-│   Next.js Dashboard │  React + TypeScript
-│   (Management UI)   │
-└─────────────────────┘
-```
+To properly bypass advanced IP-blocking or stateful DPI, the best architecture is to host the Python backend on a cloud VPS (e.g., AWS, DigitalOcean, Linode) and establish an encrypted tunnel from your desktop to the VPS.
 
-## 📦 Components
+### 1. Set up the VPS Backend
+Run these commands on your Ubuntu/Debian VPS:
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Backend** | FastAPI + PostgreSQL + Redis | REST API, auth, device management, WireGuard config |
-| **Dashboard** | Next.js 14 + TypeScript | Admin panel with device, policy, and log management |
-| **Agent** | Go + Wintun | Windows desktop agent with tunnel and DoH |
-| **Deployment** | Docker Compose + Nginx | Container orchestration and reverse proxy |
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.12+
-- Node.js 20+
-- Go 1.21+
-- Docker Desktop
-
-### 1. Start Infrastructure (PostgreSQL + Redis)
 ```bash
-cd deployment
-docker compose up postgres redis -d
-```
-
-### 2. Start Backend
-```bash
+# Clone or upload the repository to your VPS
 cd backend
-pip install -r requirements.txt
-alembic upgrade head
-uvicorn app.main:app --reload --port 8000
+
+# Install dependencies
+python3 -m pip install -r requirements.txt
+
+# Start the SecureNet Backend API
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### 3. Start Dashboard
+### 2. Run the Agent (with VPS Tunnel)
+On your Windows machine, build the Go Agent:
+
+```powershell
+cd agent
+go build -o securenet.exe ./cmd/securenet/
+```
+
+Run the agent with the new `--vps-tunnel` flag, passing in your VPS username and IP address:
+
+```powershell
+.\securenet.exe --server http://<YOUR_VPS_IP>:8000/api --email admin@securenet.dev --password admin123456 --vps-tunnel root@<YOUR_VPS_IP>
+```
+
+*(Note: You will be prompted to enter your VPS SSH password in the terminal, or it will use your SSH keys automatically).*
+
+### 3. Route Traffic through the Tunnel
+The agent will automatically create a secure SOCKS5 proxy running on port 1080.
+To route your traffic securely:
+1. Open Windows **Proxy settings**.
+2. Turn on **Manual proxy setup**.
+3. Set the Proxy to `127.0.0.1` and Port to `1080`.
+4. (Optional) Set your Windows DNS to `127.0.0.1` to use the Agent's secure DNS proxy.
+
+Your entire computer is now securely tunneled to your VPS!
+
+## 📊 Dashboard Usage
+
+Start the Next.js dashboard locally or on your VPS to view analytics:
+
 ```bash
 cd dashboard
 npm install
 npm run dev
 ```
 
-### 4. Build Agent (optional)
-```bash
-cd agent
-go build -o securenet.exe ./cmd/securenet/
-./securenet.exe --server http://localhost:8000/api --email admin@test.com --password password123
-```
-
-### 5. Full Docker Deployment
-```bash
-cd deployment
-docker compose up --build
-```
-
-Access: `http://localhost:8080` (Nginx) or `http://localhost:3000` (Dashboard direct)
-
-## 📡 API Documentation
-
-Once the backend is running, visit:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-### Key Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/register` | Register user |
-| `POST` | `/api/auth/login` | Login |
-| `POST` | `/api/devices/register` | Register device |
-| `POST` | `/api/devices/heartbeat` | Device heartbeat |
-| `GET` | `/api/devices` | List devices |
-| `GET/POST` | `/api/dns/dns-query` | DoH endpoint (RFC 8484) |
-| `GET` | `/api/policies` | List policies |
-| `GET` | `/api/wireguard/config/{id}` | Get WG config |
-
-## 🔐 Security Features
-
-- **JWT Authentication** with access/refresh tokens
-- **Role-Based Access Control** (Super Admin, Admin, Analyst, User)
-- **WireGuard Encryption** for all tunnel traffic
-- **DNS-over-HTTPS** with policy-based filtering
-- **Device Posture Checks** (encryption, antivirus, OS version)
-- **Audit Logging** for all admin actions
-- **Redis Token Blacklisting** for secure logout
-
-## 📁 Project Structure
-
-```
-SecureNet-One/
-├── agent/          # Go Desktop Agent
-├── backend/        # FastAPI Backend
-├── dashboard/      # Next.js Dashboard
-├── deployment/     # Docker Compose + Nginx
-├── docs/           # Documentation
-├── scripts/        # Utility scripts
-└── README.md
-```
-
-## 📋 Development Roadmap
-
-- [x] Phase 1: Backend (Auth, Devices, API)
-- [x] Phase 2: Policy Engine, Logging, WireGuard, DoH
-- [x] Phase 3: Next.js Dashboard
-- [x] Phase 4: Go Desktop Agent
-- [x] Phase 5: Docker Deployment
-- [ ] Phase 6: Split Tunneling
-- [ ] Phase 7: Linux/macOS Agents
-
-## 📝 License
-
-This project is built for educational purposes as a final-year cybersecurity project.
-
----
-
-Built with ❤️ inspired by [Cloudflare One](https://one.dash.cloudflare.com/)
+The Dashboard displays:
+- **Total DNS Queries** and **Average Latency** (Efficiency).
+- **Top Requested Domains** showing exactly what sites are being requested the most.
+- **Top Blocked Domains** and recent security events.

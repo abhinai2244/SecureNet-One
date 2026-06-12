@@ -37,6 +37,7 @@ func main() {
 	email := flag.String("email", "", "User email for authentication")
 	password := flag.String("password", "", "User password for authentication")
 	autoConnect := flag.Bool("auto-connect", false, "Automatically connect on startup")
+	vpsTunnel := flag.String("vps-tunnel", "", "Establish a secure SSH SOCKS5 tunnel to a VPS (e.g., user@ip)")
 	showVersion := flag.Bool("version", false, "Show version and exit")
 	headless := flag.Bool("headless", false, "Run without system tray UI (service mode)")
 	flag.Parse()
@@ -61,6 +62,7 @@ func main() {
 		Email:        *email,
 		Password:     *password,
 		AutoConnect:  *autoConnect,
+		VPSTunnel:    *vpsTunnel,
 		Version:      version,
 	}
 
