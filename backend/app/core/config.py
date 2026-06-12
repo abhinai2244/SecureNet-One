@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     # ── Database ─────────────────────────────────────────────────
     DATABASE_URL: str = "postgresql+asyncpg://securenet:securenet@localhost:5432/securenet"
 
+    @property
+    def ASYNC_DATABASE_URL(self) -> str:
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
     # ── Redis ────────────────────────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379/0"
 

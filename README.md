@@ -12,7 +12,9 @@ SecureNet One is a Zero Trust Desktop Agent, DNS Proxy, and Dashboard built for 
 
 To properly bypass advanced IP-blocking or stateful DPI, the best architecture is to host the Python backend on a cloud VPS (e.g., AWS, DigitalOcean, Linode) and establish an encrypted tunnel from your desktop to the VPS.
 
-### 1. Set up the VPS Backend
+### 1. Set up the Backend (VPS or Heroku)
+
+#### Option A: VPS Deployment (Ubuntu/Debian)
 Run these commands on your Ubuntu/Debian VPS:
 
 ```bash
@@ -25,6 +27,17 @@ python3 -m pip install -r requirements.txt
 # Start the SecureNet Backend API
 python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
+
+#### Option B: Heroku Deployment
+The backend is fully Heroku-compatible! It automatically parses Heroku's PostgreSQL `DATABASE_URL` format.
+
+```bash
+cd backend
+heroku create securenet-backend
+heroku addons:create heroku-postgresql:mini
+git push heroku main
+```
+*(Make sure you have committed the `backend/Procfile` before pushing!)*
 
 ### 2. Run the Agent (with VPS Tunnel)
 On your Windows machine, build the Go Agent:
@@ -54,12 +67,22 @@ Your entire computer is now securely tunneled to your VPS!
 
 ## 📊 Dashboard Usage
 
+### Option A: Local / VPS
 Start the Next.js dashboard locally or on your VPS to view analytics:
 
 ```bash
 cd dashboard
 npm install
-npm run dev
+npm run dev # Or 'npm run build && npm start' for production
+```
+
+### Option B: Heroku Deployment
+You can deploy the Next.js Dashboard to Heroku seamlessly:
+
+```bash
+cd dashboard
+heroku create securenet-dashboard
+git push heroku main
 ```
 
 The Dashboard displays:
